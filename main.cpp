@@ -51,6 +51,12 @@ struct Buffer
 	uint32_t* data;
 };
 
+struct Sprite
+{
+	size_t width, height;
+	uint8_t* data;
+};
+
 /* used to represent the colors of a pixel. Left most 8 bits are red, then green, then blue. With the last 8 bits set at 255. */
 uint32_t rgb_to_uint32(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -63,6 +69,22 @@ void buffer_clear(Buffer* buffer, uint32_t color)
 	for (size_t i = 0; i < buffer->width * buffer->height; ++i)
 	{
 		buffer->data[i] = color;
+	}
+}
+
+void buffer_draw_sprite(Buffer* buffer, const Sprite& sprite, size_t x, size_t y, uint32_t color)
+{
+	for (size_t xi = 0; xi < sprite.width; ++xi)
+	{
+		for (size_t yi = 0; yi < sprite.height; ++yi)
+		{
+			if (sprite.data[yi * sprite.width + xi] &&
+				(sprite.height - 1 + y - yi) < buffer->height &&
+				(x + xi) < buffer->width)
+			{
+				buffer->data[(sprite.height - 1 + y - yi) * buffer->width + (x + xi)] = color;
+			}
+		}
 	}
 }
 
@@ -213,6 +235,22 @@ int main(int argc, char* argv[])
 
 	glBindVertexArray(fullscreen_triangle_vao);
 
+	//Prepare the game
+	Sprite alien_sprite;
+	alien_sprite.width = 11;
+	alien_sprite.height = 8;
+	alien_sprite.data = new uint8_t[88]
+	{
+		0,0,1,0,0,0,0,0,1,0,0, // ..@.....@..
+		0,0,0,1,0,0,0,1,0,0,0, // ...@...@...
+		0,0,1,1,1,1,1,1,1,0,0, // ..@@@@@@@..
+		0,1,1,0,1,1,1,0,1,1,0, // .@@.@@@.@@.
+		1,1,1,1,1,1,1,1,1,1,1, // @@@@@@@@@@@
+		1,0,1,1,1,1,1,1,1,0,1, // @.@@@@@@@.@
+		1,0,1,0,0,0,0,0,1,0,1, // @.@.....@.@
+		0,0,0,1,1,0,1,1,0,0,0  // ...@@.@@...
+	};
+
 	uint32_t clear_color = rgb_to_uint32(0, 128, 0);
 
 	while (!glfwWindowShouldClose(window))
@@ -221,6 +259,8 @@ int main(int argc, char* argv[])
 		//glfwSwapBuffers(window);
 		//glfwPollEvents();
 		buffer_clear(&buffer, clear_color);
+
+		buffer_draw_sprite(&buffer, alien_sprite, 112, 128, rgb_to_uint32(128, 0, 0));
 
 		glTexSubImage2D(
 			GL_TEXTURE_2D, 0, 0, 0,
@@ -238,6 +278,9 @@ int main(int argc, char* argv[])
 	glfwTerminate();
 
 	glDeleteVertexArrays(1, &fullscreen_triangle_vao);
+
+	delete[] alien_sprite.data;
+	delete[] buffer.data;
 
 	return 0;
 }

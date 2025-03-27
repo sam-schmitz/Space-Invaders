@@ -12,6 +12,28 @@ void error_callback(int error, const char* description)
 	fprintf(stderr, "Error: %s\n", description);
 }
 
+/* A chunk of memory on the CPU that stores the pixel values for the graphics. */
+struct Buffer
+{
+	size_t width, height;
+	uint32_t* data;
+};
+
+/* used to represent the colors of a pixel. Left most 8 bits are red, then green, then blue. With the last 8 bits set at 255. */
+uint32_t rgb_to_uint32(uint8_t r, uint8_t g, uint8_t b)
+{
+	return (r << 24) | (g << 16) | (b << 8) | 255;
+}
+
+/* Iterates over all the pixels in buffer and sets them to the given color. */
+void buffer_clear(Buffer* buffer, uint32_t color)
+{
+	for (size_t i = 0; i < buffer->width * buffer->height; ++i)
+	{
+		buffer->data[i] = color;
+	}
+}
+
 int main(int argc, char* argv[])
 {
 	glfwSetErrorCallback(error_callback);

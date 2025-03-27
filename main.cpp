@@ -36,6 +36,9 @@ void buffer_clear(Buffer* buffer, uint32_t color)
 
 int main(int argc, char* argv[])
 {
+	const size_t buffer_width = 224;
+	const size_t buffer_height = 256;
+
 	glfwSetErrorCallback(error_callback);
 
 	if (!glfwInit())
@@ -72,6 +75,16 @@ int main(int argc, char* argv[])
 	printf("Shading Language: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 	glClearColor(1.0, 0.0, 0.0, 1.0);
+
+	uint32_t clear_color = rgb_to_uint32(0, 128, 0);
+
+	Buffer buffer;
+	buffer.width = buffer_width;
+	buffer.height = buffer_height;
+	buffer.data = new uint32_t[buffer.width * buffer.height];
+
+	buffer_clear(&buffer, clear_color);
+
 	while (!glfwWindowShouldClose(window))
 	{
 		glClear(GL_COLOR_BUFFER_BIT);

@@ -3,6 +3,7 @@
 /* Renders the window used for the game. */
 
 #include <cstdio>
+#include <cstdint>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 

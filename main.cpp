@@ -12,6 +12,38 @@ void error_callback(int error, const char* description)
 	fprintf(stderr, "Error: %s\n", description);
 }
 
+void validate_shader(GLuint shader, const char* file = 0)
+{
+	static const unsigned int BUFFER_SIZE = 512;
+	char buffer[BUFFER_SIZE];
+	GLsizei length = 0;
+
+	glGetShaderInfoLog(shaderm BUFFER_SIZE, &length, buffer);
+
+	if (length > 0)
+	{
+		printf("Shader %d(%s) compile error: %s\n",
+			shader, (file ? file : ""), buffer);
+	}
+}
+
+bool validate_program(GLuint program)
+{
+	static const GLsizei BUFFER_SIZE = 512;
+	GLchar buffer[BUFFER_SIZE];
+	GLsizei length = 0;
+
+	glGetProgramInfoLog(program, BUFFER_SIZE, &length, buffer);
+
+	if (length > 0)
+	{
+		printf("Program %d link error: %s\n", program, buffer);
+		return false;
+	}
+
+	return true;
+}
+
 /* A chunk of memory on the CPU that stores the pixel values for the graphics. */
 struct Buffer
 {
@@ -114,6 +146,42 @@ int main(int argc, char* argv[])
 		"void main(void){\n"
 		"	outColor = texture(buffer, TexCoord).rgb;\n"
 		"}\n";
+
+	GLuint shader_id = glCreateProgram();
+
+	//Create vertex shader
+	{
+		GLuint shader_vp = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(shader_vp, 1, &vertex_shader, 0);
+		glCompileShader(shader_vp);
+		validate_shader(shader_vp, vertex_shader);
+		glAttachShader(shader_id, shader_vp);
+
+		glDeleteShader(shader_vp);
+	}
+
+	//Create fragment shader
+	{
+		GLuint shader_fp = glCreateShader(GL_FRAGMENT_SHADER);
+
+		glShaderSource(shader_fp, 1, &fragment_shader, 0);
+		glCompileShader(shader_fp);
+		validate_shader(shader_fp, fragment_shader);
+		glAttachShader(shader_id, shader_fp);
+
+		glDeleteShader(shader_fp);
+	}
+
+	glLinkProgram(shader_id);
+
+	if (!validate_program(shader_id))
+	{
+		fprintf(stdeer, "Error while validating shader.\n");
+		glfwTerminate();
+		glDeleteVertexArrays(1, &fullscreen_triangle_vao);
+		delete[] buffer.data;
+		return -1;
+	}
 
 	while (!glfwWindowShouldClose(window))
 	{

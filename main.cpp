@@ -133,7 +133,6 @@ int main(int argc, char* argv[])
 
 	GLuint fullscreen_triangle_vao;
 	glGenVertexArrays(1, &fullscreen_triangle_vao);
-	glBindVertexArray(fullscreen_triangle_vao);
 
 	static const char* vertex_shader =
 		"\n"
@@ -200,11 +199,19 @@ int main(int argc, char* argv[])
 	GLint location = glGetUniformLocation(shader_id, "buffer");
 	glUniform1i(location, 0);
 
+	glDisable(GL_DEPTH_TEST);
+	glActiveTexture(GL_TEXTURE0);
+
+	glBindVertexArray(fullscreen_triangle_vao);
+
 	while (!glfwWindowShouldClose(window))
 	{
-		glClear(GL_COLOR_BUFFER_BIT);
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		//glClear(GL_COLOR_BUFFER_BIT);
+		//glfwSwapBuffers(window);
+		//glfwPollEvents();
+		buffer_clear(&buffer, clear_color);
+
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	glfwDestroyWindow(window);
 	glfwTerminate();

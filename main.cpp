@@ -342,6 +342,7 @@ int main(int argc, char* argv[])
 
 	uint32_t clear_color = rgb_to_uint32(0, 128, 0);
 
+	int player_move_dir = 1;
 	while (!glfwWindowShouldClose(window))
 	{
 		buffer_clear(&buffer, clear_color);
@@ -378,6 +379,19 @@ int main(int argc, char* argv[])
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 		glfwSwapBuffers(window);
+
+		if (game.player.x + player_sprite.width + player_move_dir >= game.width - 1)
+		{
+			game.player.x = game.width - player_sprite.width - player_move_dir - 1;
+			player_move_dir *= -1;
+		}
+		else if ((int)game.player.x + player_move_dir <= 0)
+		{
+			game.player.x = 0;
+			player_move_dir *= -1;
+		}
+		else game.player.x += player_move_dir;
+
 		glfwPollEvents();
 	}
 	glfwDestroyWindow(window);

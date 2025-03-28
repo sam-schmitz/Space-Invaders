@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 
 bool game_running = true;
+int move_dir = 0;
 
 void error_callback(int error, const char* description)
 {
@@ -19,14 +20,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	case GLFW_KEY_ESCAPE:
 		if (action == GLFW_PRESS) game_running = false;
 		break;
-	//case GLFW_KEY_RIGHT:
-		//if (action == GLFW_PRESS) move_dir += 1;
-		//else if (action == GLFW_RELEASE) move_dir -= 1;
-		//break;
-	//case GLFW_KEY_LEFT:
-		//if (action == GLFW_PRESS) move_dir -= 1;
-		//else if (action == GLFW_RELEASE) move_dir += 1;
-		//break;
+	case GLFW_KEY_RIGHT:
+		if (action == GLFW_PRESS) move_dir += 1;
+		else if (action == GLFW_RELEASE) move_dir -= 1;
+		break;
+	case GLFW_KEY_LEFT:
+		if (action == GLFW_PRESS) move_dir -= 1;
+		else if (action == GLFW_RELEASE) move_dir += 1;
+		break;
 	//case GLFW_KEY_SPACE:
 		//if (action == GLFW_RELEASE) fire_pressed = true;
 		//break;
@@ -368,7 +369,7 @@ int main(int argc, char* argv[])
 
 	uint32_t clear_color = rgb_to_uint32(0, 128, 0);
 
-	int player_move_dir = 1;
+	int player_move_dir = 0;
 	while (!glfwWindowShouldClose(window) && game_running)
 	{
 		buffer_clear(&buffer, clear_color);
@@ -406,17 +407,20 @@ int main(int argc, char* argv[])
 
 		glfwSwapBuffers(window);
 
-		if (game.player.x + player_sprite.width + player_move_dir >= game.width - 1)
+		player_move_dir = 2 * move_dir;
+
+		if (player_move_dir != 0)
 		{
-			game.player.x = game.width - player_sprite.width - player_move_dir - 1;
-			player_move_dir *= -1;
+			if (game.player.x + player_sprite.width + player_move_dir >= game.width)
+			{
+				game.player.x = game.width - player_sprite.width;
+			}
+			else if ((int)game.player.x + player_move_dir <= 0)
+			{
+				game.player.x = 0;
+			}
+			else game.player.x += player_move_dir;
 		}
-		else if ((int)game.player.x + player_move_dir <= 0)
-		{
-			game.player.x = 0;
-			player_move_dir *= -1;
-		}
-		else game.player.x += player_move_dir;
 
 		glfwPollEvents();
 	}

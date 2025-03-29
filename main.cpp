@@ -150,7 +150,7 @@ bool sprite_overlap_check(
 )
 {
 	if (x_a < x_b + sp_b.width && x_a + sp_a.width > x_b &&
-		y_a < y_b + ap_b.height && y_a + ap_a.height > y_b)
+		y_a < y_b + sp_b.height && y_a + sp_a.height > y_b)
 	{
 		return true;
 	}
@@ -450,16 +450,19 @@ int main(int argc, char* argv[])
 		1  // @
 	};
 
-	SpriteAnimation* alien_animation = new SpriteAnimation;
+	SpriteAnimation alien_animation[3];
 
-	alien_animation->loop = true;
-	alien_animation->num_frames = 2;
-	alien_animation->frame_duration = 10;
-	alien_animation->time = 0;
+	for (size_t i = 0; i < 3; ++i)
+	{
+		alien_animation[i].loop = true;
+		alien_animation[i].num_frames = 2;
+		alien_animation[i].frame_duration = 10;
+		alien_animation[i].time = 0;
 
-	alien_animation->frames = new Sprite * [2];
-	alien_animation->frames[0] = &alien_sprite0;
-	alien_animation->frames[1] = &alien_sprite1;
+		alien_animation[i].frames = new Sprite * [2];
+		alien_animation[i].frames[0] = &alien_sprites[2 * i];
+		alien_animation[i].frames[1] = &alien_sprites[2 * i + 1];
+	}
 
 	Game game;
 	game.width = buffer_width;
@@ -477,8 +480,13 @@ int main(int argc, char* argv[])
 	{
 		for (size_t xi = 0; xi < 11; ++xi)
 		{
-			game.aliens[yi * 11 + xi].x = 16 * xi + 20;
-			game.aliens[yi * 11 + xi].y = 17 * yi + 128;
+			Alien& alien = game.aliens[yi * 11 + xi];
+			alien.type = (5 - yi) / 2 + 1;
+
+			const Sprite& sprite = alien_sprites[2 * (alien.type - 1)];
+
+			alien.x = 16 * xi + 20 + (alien_death_sprite.width - sprite.width) / 2;
+			alien.y = 17 * yi + 128;
 		}
 	}	
 
@@ -502,7 +510,7 @@ int main(int argc, char* argv[])
 			const Alien& alien = game.aliens[ai];
 			if (alien.type == ALIEN_DEAD)
 			{
-				buffer_draw_sprite(&buffer, alien_death_sprite, alein.x, alien.y, rgb_to_uint32(128, 0, 0));
+				buffer_draw_sprite(&buffer, alien_death_sprite, alien.x, alien.y, rgb_to_uint32(128, 0, 0));
 			}
 			else
 			{
@@ -571,7 +579,7 @@ int main(int argc, char* argv[])
 		for (size_t bi = 0; bi < game.num_bullets;)
 		{
 			game.bullets[bi].y += game.bullets[bi].dir;
-			if (game.bullets[bi].y >= game.height || game.bullets[bi.y < bullet_sprite.height])
+			if (game.bullets[bi].y >= game.height || game.bullets[bi].y < bullet_sprite.height)
 			{
 				game.bullets[bi] = game.bullets[game.num_bullets - 1];
 				--game.num_bullets;
@@ -635,13 +643,21 @@ int main(int argc, char* argv[])
 
 	glDeleteVertexArrays(1, &fullscreen_triangle_vao);
 
-	delete[] alien_sprite0.data;
-	delete[] alien_sprite1.data;
-	delete[] alien_animation->frames;
+	for (size_t i = 0; i < 6; ++i)
+	{
+		delete[] alien_sprites[i].data;
+	}
+
+	delete[] alien_death_sprite.data;
+
+	for (size_t i = 0; i < 3; ++i)
+	{
+		delete[] alien_animation[i].frames;
+	}
+	
 	delete[] buffer.data;
 	delete[] game.aliens;
-
-	delete alien_animation;
+	delete[] death_counters;	
 
 	return 0;
 }

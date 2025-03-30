@@ -496,6 +496,8 @@ int main(int argc, char* argv[])
 		death_counters[i] = 10;
 	}
 
+	size_t score = 0;
+
 	uint32_t clear_color = rgb_to_uint32(0, 128, 0);
 
 	int player_move_dir = 0;
@@ -601,6 +603,7 @@ int main(int argc, char* argv[])
 				);
 				if (overlap)
 				{
+					score += 10 * (4 - game.aliens[ai].type);
 					game.aliens[ai].type = ALIEN_DEAD;
 					game.aliens[ai].x -= (alien_death_sprite.width - alien_sprite.width) / 2;
 					game.bullets[bi] = game.bullets[game.num_bullets - 1];

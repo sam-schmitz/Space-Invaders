@@ -69,8 +69,7 @@ bool validate_program(GLuint program)
 	return true;
 }
 
-/* A chunk of memory on the CPU that stores the pixel values for the graphics. */
-struct Buffer
+struct Buffer	/* A chunk of memory on the CPU that stores the pixel values for the graphics. */
 {
 	size_t width, height;
 	uint32_t* data;
@@ -230,9 +229,11 @@ int main(int argc, char* argv[])
 	const size_t buffer_width = 224;
 	const size_t buffer_height = 256;
 
+	//Set window's dimensions. Currently based off of the buffer but don't have to be. 
 	const size_t window_width = buffer_width * 2;
 	const size_t window_height = buffer_height * 2;
 
+	//Create Window
 	glfwSetErrorCallback(error_callback);
 
 	if (!glfwInit())
@@ -277,6 +278,8 @@ int main(int argc, char* argv[])
 
 	glClearColor(1.0, 0.0, 0.0, 1.0);
 
+	//Create the buffer
+	//Holds data about what is to be displayed. Rendered in the CPU
 	Buffer buffer;
 	buffer.width = buffer_width;
 	buffer.height = buffer_height;
@@ -287,6 +290,7 @@ int main(int argc, char* argv[])
 	GLuint buffer_texture;
 	glGenTextures(1, &buffer_texture);
 
+	//Creates and binds a texture based on the buffer to the window. 
 	glBindTexture(GL_TEXTURE_2D, buffer_texture);
 	glTexImage2D(
 		GL_TEXTURE_2D, 0, GL_RGB8,
@@ -298,14 +302,7 @@ int main(int argc, char* argv[])
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	float vertices[] = {
-		// Position   // Texture Coords
-		-1.0f, -1.0f,  0.0f, 0.0f,  // Bottom-left
-		 1.0f, -1.0f,  1.0f, 0.0f,  // Bottom-right
-		-1.0f,  1.0f,  0.0f, 1.0f,  // Top-left
-		 1.0f,  1.0f,  1.0f, 1.0f   // Top-right
-	};
-
+	//Create shaders and attach them to the window
 	GLuint fullscreen_triangle_vao;
 	glGenVertexArrays(1, &fullscreen_triangle_vao);
 
@@ -394,6 +391,8 @@ int main(int argc, char* argv[])
 	glBindVertexArray(fullscreen_triangle_vao);
 
 	//Prepare the game
+
+	//create sprites
 	Sprite alien_sprites[6];
 	
 	alien_sprites[0].width = 8;
@@ -612,6 +611,8 @@ int main(int argc, char* argv[])
 		alien_animation[i].frames[1] = &alien_sprites[2 * i + 1];
 	}
 
+
+	//Set up the game class with the starting state and other game information
 	Game game;
 	game.width = buffer_width;
 	game.height = buffer_height;
@@ -652,8 +653,10 @@ int main(int argc, char* argv[])
 	int player_move_dir = 0;
 	while (!glfwWindowShouldClose(window) && game_running)
 	{
+		//reset the buffer for a new frame
 		buffer_clear(&buffer, clear_color);
 
+		//Add score and credits to the buffer
 		buffer_draw_text(&buffer, text_spritesheet, "SCORE", 4, game.height - text_spritesheet.height - 7, rgb_to_uint32(128, 0, 0));
 
 		buffer_draw_number(&buffer, number_spritesheet, score, 4 + 2 * number_spritesheet.width, game.height - 2 * number_spritesheet.height - 12, rgb_to_uint32(128, 0, 0));
@@ -670,17 +673,19 @@ int main(int argc, char* argv[])
 			buffer.data[game.width * 16 + i] = rgb_to_uint32(128, 0, 0);
 		}
 
+		//Add aliens to the buffer
 		for (size_t ai = 0; ai < game.num_aliens; ++ai)
 		{
 			if (!death_counters[ai]) continue;
 
 			const Alien& alien = game.aliens[ai];
-			if (alien.type == ALIEN_DEAD)
+			if (alien.type == ALIEN_DEAD)	//Check if alien is dead
 			{
 				buffer_draw_sprite(&buffer, alien_death_sprite, alien.x, alien.y, rgb_to_uint32(128, 0, 0));
 			}
 			else
 			{
+				//Alien is not dead. Select the proper sprite and draw them in the proper position. 
 				const SpriteAnimation& animation = alien_animation[alien.type - 1];
 				size_t current_frame = animation.time / animation.frame_duration;
 				const Sprite& sprite = *animation.frames[current_frame];
@@ -688,6 +693,7 @@ int main(int argc, char* argv[])
 			}			
 		}
 
+		//Draw Bullets
 		for (size_t bi = 0; bi < game.num_bullets; ++bi)
 		{
 			const Bullet& bullet = game.bullets[bi];
@@ -695,9 +701,10 @@ int main(int argc, char* argv[])
 			buffer_draw_sprite(&buffer, sprite, bullet.x, bullet.y, rgb_to_uint32(128, 0, 0));
 		}
 
+		//Draw the player
 		buffer_draw_sprite(&buffer, player_sprite, game.player.x, game.player.y, rgb_to_uint32(128, 0, 0));
 
-		//Update Alien Animations
+		//Update Alien Animations (For the next frame). 
 		for (size_t i = 0; i < 3; ++i)
 		{
 			++alien_animation[i].time;
@@ -707,6 +714,7 @@ int main(int argc, char* argv[])
 			}
 		}		
 
+		//Update Bullet Sprites
 		for (size_t bi = 0; bi < game.num_bullets;)
 		{
 			game.bullets[bi].y += game.bullets[bi].dir;
@@ -721,6 +729,7 @@ int main(int argc, char* argv[])
 			++bi;
 		}
 
+		//Draw the buffer to the window
 		glTexSubImage2D(
 			GL_TEXTURE_2D, 0, 0, 0,
 			buffer.width, buffer.height,
@@ -728,6 +737,7 @@ int main(int argc, char* argv[])
 			buffer.data
 		);
 
+		//Properly scale the buffer to the window
 		int window_width, window_height;
 		glfwGetFramebufferSize(window, &window_width, &window_height);
 
@@ -763,9 +773,10 @@ int main(int argc, char* argv[])
 				continue;
 			}
 
-			//check hit
+			//check each alien to see if they were hit
 			for (size_t ai = 0; ai < game.num_aliens; ++ai)
 			{
+				//Alien was already killed
 				const Alien& alien = game.aliens[ai];
 				if (alien.type == ALIEN_DEAD) continue;
 
@@ -778,6 +789,7 @@ int main(int argc, char* argv[])
 				);
 				if (overlap)
 				{
+					//Alien was hit. Update game values. 
 					score += 10 * (4 - game.aliens[ai].type);
 					game.aliens[ai].type = ALIEN_DEAD;
 					game.aliens[ai].x -= (alien_death_sprite.width - alien_sprite.width) / 2;
@@ -792,6 +804,7 @@ int main(int argc, char* argv[])
 
 		player_move_dir = 2 * move_dir;
 
+		//Handle player movement
 		if (player_move_dir != 0)
 		{
 			if (game.player.x + player_sprite.width + player_move_dir >= game.width)
@@ -805,6 +818,7 @@ int main(int argc, char* argv[])
 			else game.player.x += player_move_dir;
 		}
 
+		//Player shoots
 		if (fire_pressed && game.num_bullets < GAME_MAX_BULLETS)
 		{
 			game.bullets[game.num_bullets].x = game.player.x + player_sprite.width / 2;
@@ -819,6 +833,7 @@ int main(int argc, char* argv[])
 	glfwDestroyWindow(window);
 	glfwTerminate();
 
+	//Game closed, Delete data
 	glDeleteVertexArrays(1, &fullscreen_triangle_vao);
 
 	for (size_t i = 0; i < 6; ++i)

@@ -6,10 +6,16 @@
 #include <cstdint>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <chrono>
+#include <thread>
+
+using namespace std::chrono;
 
 bool game_running = true;
 int move_dir = 0;
 bool fire_pressed = 0;
+
+const double FRAME_TIME = .016;	//Caps the frame rate at 60 fps (new frame every 1/60 seconds)
 
 void error_callback(int error, const char* description)
 {
@@ -653,6 +659,9 @@ int main(int argc, char* argv[])
 	int player_move_dir = 0;
 	while (!glfwWindowShouldClose(window) && game_running)
 	{
+		//record the start time of the frame
+		auto frame_start = std::chrono::steady_clock::now();
+
 		//reset the buffer for a new frame
 		buffer_clear(&buffer, clear_color);
 
@@ -829,6 +838,17 @@ int main(int argc, char* argv[])
 		fire_pressed = false;
 
 		glfwPollEvents();
+
+		// === Frame Timing Control ===
+
+		auto frame_end = std::chrono::steady_clock::now();
+		std::chrono::duration<double> elapsed = frame_end - frame_start;
+
+		double sleep_time = FRAME_TIME - elapsed.count();
+		if (sleep_time > 0)
+		{
+			std::this_thread::sleep_for(std::chrono::duration<double>(sleep_time));
+		}
 	}
 	glfwDestroyWindow(window);
 	glfwTerminate();

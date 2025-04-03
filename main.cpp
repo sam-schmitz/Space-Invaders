@@ -230,6 +230,9 @@ int main(int argc, char* argv[])
 	const size_t buffer_width = 224;
 	const size_t buffer_height = 256;
 
+	const size_t window_width = buffer_width * 2;
+	const size_t window_height = buffer_height * 2;
+
 	glfwSetErrorCallback(error_callback);
 
 	if (!glfwInit())
@@ -242,12 +245,16 @@ int main(int argc, char* argv[])
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-	GLFWwindow* window = glfwCreateWindow(buffer_width, buffer_height, "Space Invaders", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Space Invaders", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
 		return -1;
 	}
+
+	glfwSetFramebufferSizeCallback(window, [](GLFWwindow* window, int width, int height) {
+		glViewport(0, 0, width, height);
+		});
 
 	glfwSetKeyCallback(window, key_callback);
 
@@ -291,6 +298,14 @@ int main(int argc, char* argv[])
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+	float vertices[] = {
+		// Position   // Texture Coords
+		-1.0f, -1.0f,  0.0f, 0.0f,  // Bottom-left
+		 1.0f, -1.0f,  1.0f, 0.0f,  // Bottom-right
+		-1.0f,  1.0f,  0.0f, 1.0f,  // Top-left
+		 1.0f,  1.0f,  1.0f, 1.0f   // Top-right
+	};
+
 	GLuint fullscreen_triangle_vao;
 	glGenVertexArrays(1, &fullscreen_triangle_vao);
 
@@ -312,11 +327,14 @@ int main(int argc, char* argv[])
 		"#version 330\n"
 		"\n"
 		"uniform sampler2D screenTexture;\n" // Renamed from 'buffer'
+		"uniform vec2 scaleFactor;\n"
+		"\n"
 		"noperspective in vec2 TexCoord;\n"
 		"\n"
 		"out vec3 outColor;\n"
 		"\n"
 		"void main(void){\n"
+		"	vec2 scaledTexCoord = TexCoord / scaleFactor;\n"
 		"   outColor = texture(screenTexture, TexCoord).rgb;\n"
 		"}\n";
 
@@ -709,6 +727,16 @@ int main(int argc, char* argv[])
 			GL_RGBA, GL_UNSIGNED_INT_8_8_8_8,
 			buffer.data
 		);
+
+		int window_width, window_height;
+		glfwGetFramebufferSize(window, &window_width, &window_height);
+
+		float scaleX = (float)window_width / buffer.width;
+		float scaleY = (float)window_height / buffer.height;
+
+		GLuint scaleLocation = glGetUniformLocation(shader_id, "scaleFactor");
+		glUseProgram(shader_id);
+		glUniform2f(scaleLocation, scaleX, scaleY);
 
 		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 

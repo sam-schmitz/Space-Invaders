@@ -8,6 +8,7 @@
 #include <GLFW/glfw3.h>
 #include <chrono>
 #include <thread>
+#include <random>
 
 using namespace std::chrono;
 
@@ -16,6 +17,9 @@ int move_dir = 0;
 bool fire_pressed = 0;
 
 const double FRAME_TIME = .016;	//Caps the frame rate at 60 fps (new frame every 1/60 seconds)
+
+std::random_device rd;
+std::mt19937 rng(rd());
 
 void error_callback(int error, const char* description)
 {
@@ -114,7 +118,7 @@ struct Game
 	size_t num_bullets;
 	Alien* aliens;
 	Player player;
-	Bullet bullets[GAME_MAX_BULLETS];
+	Bullet bullets[GAME_MAX_BULLETS];	
 };
 
 struct SpriteAnimation
@@ -142,7 +146,7 @@ bool all_aliens_dead(Game& game)
 		{
 			return false;
 		}
-	}
+	}	
 	return true;
 }
 
@@ -676,6 +680,8 @@ int main(int argc, char* argv[])
 	size_t score = 0;
 	size_t credits = 0;
 
+	size_t aliensShoot = 0;
+
 	uint32_t clear_color = rgb_to_uint32(0, 128, 0);
 
 	int player_move_dir = 0;
@@ -859,9 +865,44 @@ int main(int argc, char* argv[])
 		}
 		fire_pressed = false;
 
+		//Aliens shoot
+		if (aliensShoot < 5) {	//aliens shoot once every 5 frames
+			aliensShoot += 1;
+		}
+		else
+		{
+			aliensShoot = 0;
+			//generate a random number to represent an alien
+			std::uniform_int_distribution<size_t>dist(0, game.num_aliens - 1);
+			size_t ai;
+
+			//generate a random alien. If they are dead find a new one. 
+			do
+			{
+				ai = dist(rng);
+			} while (!death_counters[ai]);	//need to add a check for aliens infront of current
+
+			// shoot a bullet from that alien 	
+			if (game.num_bullets < GAME_MAX_BULLETS)
+			{
+				//get the alien and their sprite
+				const Alien& alien = game.aliens[ai];
+				const SpriteAnimation& animation = alien_animation[alien.type - 1];
+				size_t current_frame = animation.time / animation.frame_duration;
+				const Sprite& sprite = *animation.frames[current_frame];
+
+				game.bullets[game.num_bullets].x = alien.x + sprite.width / 2;
+				game.bullets[game.num_bullets].y = alien.y - sprite.height;
+				game.bullets[game.num_bullets].dir = -2;
+				++game.num_bullets;
+
+			}
+		}
+
 		//check if all aliens are dead
 		if (all_aliens_dead(game))
 		{
+			score += 10;
 			spawn_new_wave(game, alien_sprites, death_counters, alien_death_sprite);
 		}
 

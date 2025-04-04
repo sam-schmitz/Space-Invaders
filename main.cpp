@@ -138,6 +138,26 @@ enum AlienType : uint8_t
 	ALIEN_TYPE_C = 3
 };
 
+bool alien_in_front(Game& game, size_t ai) {
+	const Alien& current = game.aliens[ai];
+
+	for (size_t i = 0; i < game.num_aliens; ++i)
+	{
+		if (i == ai) continue;
+
+		const Alien& other = game.aliens[i];
+
+		if (other.type == ALIEN_DEAD) continue;
+
+		if (abs((int)other.x - (int)current.x) < 5) {
+			if (other.y < current.y) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 bool all_aliens_dead(Game& game)
 {
 	for (size_t i = 0; i < game.num_aliens; ++i)
@@ -880,7 +900,7 @@ int main(int argc, char* argv[])
 			do
 			{
 				ai = dist(rng);
-			} while (!death_counters[ai]);	//need to add a check for aliens infront of current
+			} while (!death_counters[ai] || alien_in_front(game, ai));	//need to add a check for aliens infront of current
 
 			// shoot a bullet from that alien 	
 			if (game.num_bullets < GAME_MAX_BULLETS)
@@ -888,7 +908,7 @@ int main(int argc, char* argv[])
 				//get the alien and their sprite
 				const Alien& alien = game.aliens[ai];
 				const SpriteAnimation& animation = alien_animation[alien.type - 1];
-				size_t current_frame = animation.time / animation.frame_duration;
+				size_t current_frame = animation.time / animation.frame_duration; 
 				const Sprite& sprite = *animation.frames[current_frame];
 
 				game.bullets[game.num_bullets].x = alien.x + sprite.width / 2;

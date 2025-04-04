@@ -134,6 +134,38 @@ enum AlienType : uint8_t
 	ALIEN_TYPE_C = 3
 };
 
+bool all_aliens_dead(Game& game)
+{
+	for (size_t i = 0; i < game.num_aliens; ++i)
+	{
+		if (game.aliens[i].type != ALIEN_DEAD)
+		{
+			return false;
+		}
+	}
+	return true;
+}
+
+void spawn_new_wave(Game& game, const Sprite* alien_sprites,
+	uint8_t* death_counters, const Sprite& alien_death_sprite)
+{
+	for (size_t yi = 0; yi < 5; ++yi)
+	{
+		for (size_t xi = 0; xi < 11; ++xi)
+		{
+			Alien& alien = game.aliens[yi * 11 + xi];
+			alien.type = (5 - yi) / 2 + 1;
+
+			const Sprite& sprite = alien_sprites[2 * (alien.type - 1)];
+
+			alien.x = 16 * xi + 20 + (alien_death_sprite.width - sprite.width);
+			alien.y = 17 * yi + 128;
+
+			death_counters[yi * 11 + xi] = 1;
+		}
+	}
+}
+
 /* used to represent the colors of a pixel. Left most 8 bits are red, then green, then blue. With the last 8 bits set at 255. */
 uint32_t rgb_to_uint32(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -626,26 +658,16 @@ int main(int argc, char* argv[])
 	game.aliens = new Alien[game.num_aliens];
 	game.num_bullets = 0;
 
+	uint8_t* death_counters = new uint8_t[game.num_aliens];
+
 	game.player.x = 112 - 5;
 	game.player.y = 32;
 
 	game.player.life = 3;
 
-	for (size_t yi = 0; yi < 5; ++yi)
-	{
-		for (size_t xi = 0; xi < 11; ++xi)
-		{
-			Alien& alien = game.aliens[yi * 11 + xi];
-			alien.type = (5 - yi) / 2 + 1;
+	spawn_new_wave(game, alien_sprites, death_counters, alien_death_sprite);
 
-			const Sprite& sprite = alien_sprites[2 * (alien.type - 1)];
-
-			alien.x = 16 * xi + 20 + (alien_death_sprite.width - sprite.width) / 2;
-			alien.y = 17 * yi + 128;
-		}
-	}	
-
-	uint8_t* death_counters = new uint8_t[game.num_aliens];
+	
 	for (size_t i = 0; i < game.num_aliens; ++i)
 	{
 		death_counters[i] = 10;
@@ -836,6 +858,12 @@ int main(int argc, char* argv[])
 			++game.num_bullets;
 		}
 		fire_pressed = false;
+
+		//check if all aliens are dead
+		if (all_aliens_dead(game))
+		{
+			spawn_new_wave(game, alien_sprites, death_counters, alien_death_sprite);
+		}
 
 		glfwPollEvents();
 

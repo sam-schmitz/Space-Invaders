@@ -865,7 +865,7 @@ int main(int argc, char* argv[])
 			{				
 				game.player.life -= 1;				
 				if (game.player.life == 0) 
-				{					
+				{		
 					game_running = false;
 					break;
 				}			
@@ -966,6 +966,39 @@ int main(int argc, char* argv[])
 		{
 			std::this_thread::sleep_for(std::chrono::duration<double>(sleep_time));
 		}
+	}
+	game_running = true;
+
+	//loop after player has lost
+	while (!glfwWindowShouldClose(window) && game_running)
+	{
+		//GAME OVER
+		buffer_draw_text(&buffer, text_spritesheet, "GAME OVER", 80, 12 * text_spritesheet.height, rgb_to_uint32(128, 0, 0));		
+
+		//Draw the buffer to the window
+		glTexSubImage2D(
+			GL_TEXTURE_2D, 0, 0, 0,
+			buffer.width, buffer.height,
+			GL_RGBA, GL_UNSIGNED_INT_8_8_8_8,
+			buffer.data
+		);
+
+		//Properly scale the buffer to the window
+		int window_width, window_height;
+		glfwGetFramebufferSize(window, &window_width, &window_height);
+
+		float scaleX = (float)window_width / buffer.width;
+		float scaleY = (float)window_height / buffer.height;
+
+		GLuint scaleLocation = glGetUniformLocation(shader_id, "scaleFactor");
+		glUseProgram(shader_id);
+		glUniform2f(scaleLocation, scaleX, scaleY);
+
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+		glfwSwapBuffers(window);
+
+
 	}
 	glfwDestroyWindow(window);
 	glfwTerminate();

@@ -918,7 +918,12 @@ int main(int argc, char* argv[])
 			do
 			{
 				ai = dist(rng);
-			} while (!death_counters[ai] || alien_in_front(game, ai));	//need to add a check for aliens infront of current
+			} while (!death_counters[ai] || alien_in_front(game, ai));
+
+			if (game.aliens[ai].type == ALIEN_DEAD)
+			{
+				continue;
+			}
 
 			// shoot a bullet from that alien 	
 			if (game.num_bullets < GAME_MAX_BULLETS)
@@ -927,13 +932,13 @@ int main(int argc, char* argv[])
 				const Alien& alien = game.aliens[ai];
 				const SpriteAnimation& animation = alien_animation[alien.type - 1];
 				size_t current_frame = animation.time / animation.frame_duration; 
- 				const Sprite& sprite = *animation.frames[current_frame];
+				const Sprite& sprite = *animation.frames[current_frame];
 
 				game.bullets[game.num_bullets].x = alien.x + sprite.width / 2;
 				game.bullets[game.num_bullets].y = alien.y - sprite.height;
 				game.bullets[game.num_bullets].dir = -2;
-				++game.num_bullets;
-
+				++game.num_bullets; 				
+ 								
 			}
 		}
 

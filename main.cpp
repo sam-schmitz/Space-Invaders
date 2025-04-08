@@ -856,6 +856,18 @@ int main(int argc, char* argv[])
 				}
 			}
 
+			//Check if the player was hit
+			bool overlap = sprite_overlap_check(
+				bullet_sprite, game.bullets[bi].x, game.bullets[bi].y,
+				player_sprite, game.player.x, game.player.y
+			);
+			if (overlap)
+			{
+				printf("Player Hit!\n");
+				game_running = false;
+				break;
+			}
+
 			++bi;
 		}
 
@@ -886,7 +898,7 @@ int main(int argc, char* argv[])
 		fire_pressed = false;
 
 		//Aliens shoot
-		if (aliensShoot < 5) {	//aliens shoot once every 5 frames
+		if (aliensShoot < 20) {	//aliens shoot once every 5 frames
 			aliensShoot += 1;
 		}
 		else
@@ -909,7 +921,7 @@ int main(int argc, char* argv[])
 				const Alien& alien = game.aliens[ai];
 				const SpriteAnimation& animation = alien_animation[alien.type - 1];
 				size_t current_frame = animation.time / animation.frame_duration; 
-				const Sprite& sprite = *animation.frames[current_frame];
+ 				const Sprite& sprite = *animation.frames[current_frame];
 
 				game.bullets[game.num_bullets].x = alien.x + sprite.width / 2;
 				game.bullets[game.num_bullets].y = alien.y - sprite.height;

@@ -862,10 +862,16 @@ int main(int argc, char* argv[])
 				player_sprite, game.player.x, game.player.y
 			);
 			if (overlap)
-			{
-				printf("Player Hit!\n");
-				game_running = false;
-				break;
+			{				
+				game.player.life -= 1;				
+				if (game.player.life == 0) 
+				{					
+					game_running = false;
+					break;
+				}			
+				game.bullets[bi] = game.bullets[game.num_bullets - 1];
+				--game.num_bullets;
+				continue;
 			}
 
 			++bi;

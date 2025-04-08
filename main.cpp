@@ -946,6 +946,11 @@ int main(int argc, char* argv[])
 		if (all_aliens_dead(game))
 		{
 			score += 10;
+			//clear all bullets
+			while (game.num_bullets > 0) {
+				game.bullets[0] = game.bullets[game.num_bullets - 1];
+				--game.num_bullets;
+			}
 			spawn_new_wave(game, alien_sprites, death_counters, alien_death_sprite);
 		}
 

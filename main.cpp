@@ -854,6 +854,26 @@ int main(int argc, char* argv[])
 			{
 				--death_counters[ai];
 			}
+
+			//Check if the player was hit
+
+			const SpriteAnimation& animation = alien_animation[alien.type - 1];
+			size_t current_frame = animation.time / animation.frame_duration;
+			const Sprite& alien_sprite = *animation.frames[current_frame];
+
+			bool overlap = sprite_overlap_check(
+				alien_sprite, alien.x, alien.y,
+				player_sprite, game.player.x, game.player.y
+			);
+			if (overlap)
+			{
+				game.player.life -= 1;
+				if (game.player.life == 0)
+				{
+					game_running = false;
+					break;
+				}				
+			}
 		}
 
 		//Simulate Bullets

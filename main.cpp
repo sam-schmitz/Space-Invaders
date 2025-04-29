@@ -158,6 +158,23 @@ bool alien_in_front(Game& game, size_t ai) {
 	return false;
 }
 
+bool alien_at_border(Game& game) {
+	for (size_t i = 0; i < game.num_aliens; ++i)
+	{
+		const Alien& alien = game.aliens[i];
+		if (alien.type == ALIEN_DEAD) continue;
+
+		if ((int)(alien.x - 3) < (int)0) {
+			return true;
+		}
+
+		if ((int)(alien.x + (int)1) > ((int)game.width-(int)12)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool all_aliens_dead(Game& game)
 {
 	for (size_t i = 0; i < game.num_aliens; ++i)
@@ -705,6 +722,7 @@ int main(int argc, char* argv[])
 	uint32_t clear_color = rgb_to_uint32(0, 128, 0);
 
 	int player_move_dir = 0;
+	int alien_move_dir = 1;
 	while (!glfwWindowShouldClose(window) && game_running)
 	{
 		//record the start time of the frame
@@ -730,22 +748,33 @@ int main(int argc, char* argv[])
 			buffer.data[game.width * 16 + i] = rgb_to_uint32(128, 0, 0);
 		}
 
+		//check if aliens are at the border
+		if (alien_at_border(game)) {
+			alien_move_dir *= -1;
+		}
+
 		//Add aliens to the buffer
 		for (size_t ai = 0; ai < game.num_aliens; ++ai)
 		{
 			if (!death_counters[ai]) continue;
 
-			const Alien& alien = game.aliens[ai];
+			Alien& alien = game.aliens[ai];
 			if (alien.type == ALIEN_DEAD)	//Check if alien is dead
 			{
 				buffer_draw_sprite(&buffer, alien_death_sprite, alien.x, alien.y, rgb_to_uint32(128, 0, 0));
 			}
 			else
 			{
-				//Alien is not dead. Select the proper sprite and draw them in the proper position. 
+				//Alien is not dead. 
+				//Select the proper sprite for the alien
 				const SpriteAnimation& animation = alien_animation[alien.type - 1];
 				size_t current_frame = animation.time / animation.frame_duration;
 				const Sprite& sprite = *animation.frames[current_frame];
+
+				//move the alien in the alien_move_dir
+				alien.x += alien_move_dir;
+
+				//draw the alien to the buffer. 
 				buffer_draw_sprite(&buffer, sprite, alien.x, alien.y, rgb_to_uint32(128, 0, 0));
 			}			
 		}

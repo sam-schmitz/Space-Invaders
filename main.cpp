@@ -750,7 +750,15 @@ int main(int argc, char* argv[])
 
 		//check if aliens are at the border
 		if (alien_at_border(game)) {
+			//update the direction the aliens are moving
 			alien_move_dir *= -1;
+
+			//move the aliens closer to the player
+			for (size_t ai = 0; ai < game.num_aliens; ++ai)
+			{
+				Alien& alien = game.aliens[ai];
+				alien.y -= 5;
+			}
 		}
 
 		//Add aliens to the buffer

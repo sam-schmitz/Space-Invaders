@@ -855,6 +855,9 @@ int main(int argc, char* argv[])
 				--death_counters[ai];
 			}
 
+			//Alien was already killed
+			if (alien.type == ALIEN_DEAD) continue;
+
 			//Check if the player was hit
 
 			const SpriteAnimation& animation = alien_animation[alien.type - 1];
